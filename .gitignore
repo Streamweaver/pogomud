@@ -1,0 +1,12 @@
+# File extensions to ignore
+*.o
+*.a
+*.so
+*.exe
+*.sublime-*
+
+# Directories to Ignore
+bin/
+pkg/
+github.com/
+code.wolfmud.org/
