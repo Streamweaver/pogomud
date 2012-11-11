@@ -1,0 +1,15 @@
+{
+  "Name": "PoGo MUD",
+  "Protocol": "tcp",
+  "Host": "localhost",
+  "Port": 4201,
+  "BufferLimit": 1024,
+  "Database": {
+    "Host": "localhost",
+    "Port": "8000",
+    "Name": "Database Name",
+    "User": "Database username",
+    "Pass": "Database user password",
+    "Engine": "Database engine name."
+  }
+}

@@ -8,5 +8,4 @@
 # Directories to Ignore
 bin/
 pkg/
-github.com/
-code.wolfmud.org/
+.project
