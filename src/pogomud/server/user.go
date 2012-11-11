@@ -5,7 +5,6 @@ import (
 	"net"
 	"log"
 	"bufio"
-	"strings"
 	"fmt"
 )
 
@@ -31,11 +30,11 @@ func (u *User) Destroy() {
 func HandleToServer(user *User) {
 	reader := bufio.NewReader(user.Conn)
 	for {
-		line, err := reader.ReadString('\n')
+		line, _, err := reader.ReadLine()
 		if err != nil {
 			log.Fatal(err)
 		}
-		user.toServer <- NewMessage(user.Name, line)
+		user.toServer <- NewMessage(user.Name, string(line))
 	}
 }
 
@@ -51,13 +50,13 @@ func HandleToUser(user *User) {
 func nameSetter(conn *net.TCPConn) string {
 	conn.Write([]byte("Enter a name to use: "))
 	r := bufio.NewReader(conn)
-	line, err := r.ReadString('\n')
+	line, _, err := r.ReadLine()
 	if err != nil {
 		fmt.Printf("Error reading name string: %s", err)
 		log.Fatal(err)
 	}
 	
-	return strings.Trim(line, " \n")
+	return string(line)
 }
 
 // type User struct {
@@ -77,5 +76,5 @@ func HandleUser(conn *net.TCPConn, toServer chan Message, userList map[string]Us
 	userList[newUser.Name] = newUser
 	go HandleToServer(&newUser)
 	go HandleToUser(&newUser)
-	toServer <- NewMessage("", name + " has connected.")
+	toServer <- NewMessage("server", name + " has connected.")
 }
