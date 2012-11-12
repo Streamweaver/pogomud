@@ -50,15 +50,18 @@ func HandleToUser(user *User) {
 }
 
 func nameSetter(conn *net.TCPConn) string {
-	conn.Write([]byte("Enter a name to use: "))
-	r := bufio.NewReader(conn)
-	line, _, err := r.ReadLine()
-	if err != nil {
-		fmt.Printf("Error reading name string: %s", err)
-		log.Fatal(err)
+	var name string
+	for len(name) == 0 {
+		conn.Write([]byte("Enter a name to use: "))
+		r := bufio.NewReader(conn)
+		line, _, err := r.ReadLine()
+		if err != nil {
+			fmt.Printf("Error reading name string: %s", err)
+			log.Fatal(err)
+		}
+		name = string(line)
 	}
-	
-	return string(line)
+	return name
 }
 
 // type User struct {
