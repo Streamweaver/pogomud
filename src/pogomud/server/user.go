@@ -8,6 +8,8 @@ import (
 	"fmt"
 )
 
+// Represents all the connection and channel information
+// needed for a user on the server.
 type User struct {
 	Name string
 	Conn *net.TCPConn
