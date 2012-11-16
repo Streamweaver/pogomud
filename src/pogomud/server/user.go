@@ -6,7 +6,14 @@ import (
 	"log"
 	"bufio"
 	"fmt"
+	"regexp"
 )
+
+const (
+	VALIDNAMEMSG =  "Usernames must begin with a letter and contain only letters, understores or numbers."
+	WELCOMEMSG = "Welcome to PoGoMud!"
+)
+
 
 // Represents all the connection and channel information
 // needed for a user on the server.
@@ -49,19 +56,44 @@ func HandleToUser(user *User) {
 	}
 }
 
-func nameSetter(conn *net.TCPConn) string {
+// Checks for valid usernames.
+func nameSetter(conn *net.TCPConn, UserList map[string]User) string {
 	var name string
-	for len(name) == 0 {
-		conn.Write([]byte("Enter a name to use: "))
+	for valid := false; valid != true; {
+		conn.Write([]byte(VALIDNAMEMSG + "\n" + "Enter a name to use: "))
 		r := bufio.NewReader(conn)
 		line, _, err := r.ReadLine()
 		if err != nil {
-			fmt.Printf("Error reading name string: %s", err)
-			log.Fatal(err)
+			conn.Write([]byte(fmt.Sprintf("Name Error: %s", err)))
+			continue
 		}
-		name = string(line)
+		valid, msg := validateName(string(line), UserList)
+		if valid {
+			name = string(line)
+		} else {
+			conn.Write([]byte(fmt.Sprintf("Name Error: %s", msg)))
+		}
 	}
 	return name
+}
+
+// Checks for valid name string and returns ture of false.
+// TODO add validation.
+func validateName(name string, UserList map[string]User) (bool, string) {
+	if _, ok := UserList[name]; ok {
+		return false, "User already exists with that name."
+	}
+	namePtrn, err := regexp.Compile(`^[a-zA-Z][a-zA-z_\d]{3,15}$`)
+	if err != nil {
+		fmt.Printf("Error in name validation regexp: %s", err)
+		// TODO log this
+	}
+	// That username itself follows basic naming rules.
+	if !namePtrn.MatchString(name) {
+		return false, "Invalid username. " + VALIDNAMEMSG
+	}
+	// TODO Check regexp here.
+	return true, "Name accepted."  // all names valid right now. 
 }
 
 // type User struct {
@@ -71,7 +103,8 @@ func nameSetter(conn *net.TCPConn) string {
 // 	toUser chan server.Message
 // }
 func HandleUser(conn *net.TCPConn, toServer chan Message, userList map[string]User) {
-	name := nameSetter(conn)
+	conn.Write([]byte(WELCOMEMSG + "\n"))
+	name := nameSetter(conn, userList)
 	newUser := User{
 		name,
 		conn,
