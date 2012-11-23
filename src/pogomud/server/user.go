@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	//"pogomud/world"
 	"regexp"
 )
 
@@ -22,21 +23,24 @@ type User struct {
 	toServer chan Message
 	toUser   chan Message
 	online   bool // Setting to false ends users handlers.
+	userList map[string]User
 }
 
 // Closes the connection and preforms anything needed with it.
-func (u *User) Close() {
-	//
+func (u *User) Logout() {
+	u.Destroy()
+	u.online = false
+	u.Conn.Close()
 }
 
 // Removes the user from the server userlist.
 func (u *User) Destroy() {
-	//
+	delete(u.userList, u.Name)
 }
 
 // Listends to the users Outgoing channel and sends
 // new values to the connection.
-func HandleToServer(user *User) {
+func HandleCommands(user *User) {
 	reader := bufio.NewReader(user.Conn)
 	for user.online {
 		line, _, err := reader.ReadLine()
@@ -44,8 +48,7 @@ func HandleToServer(user *User) {
 			log.Fatal(err)
 		}
 		if string(line) == "QUIT" {
-			user.online = false
-			user.Conn.Close()
+			user.Logout()
 		}
 		user.toServer <- NewMessage(user.Name, string(line))
 	}
@@ -115,9 +118,10 @@ func HandleUser(conn *net.TCPConn, toServer chan Message, userList map[string]Us
 		toServer,
 		make(chan Message),
 		true,
+		userList,
 	}
 	userList[newUser.Name] = newUser
-	go HandleToServer(&newUser)
+	go HandleCommands(&newUser)
 	go HandleToUser(&newUser)
 	toServer <- NewMessage("server", name+" has connected.")
 }
