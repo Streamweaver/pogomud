@@ -2,26 +2,26 @@
 package server
 
 import (
-	"net"
-	"log"
 	"bufio"
 	"fmt"
+	"log"
+	"net"
 	"regexp"
 )
 
 const (
-	VALIDNAMEMSG =  "Usernames must begin with a letter and contain only letters, understores or numbers."
-	WELCOMEMSG = "Welcome to PoGoMud!"
+	VALIDNAMEMSG = "Usernames must begin with a letter and contain only letters, understores or numbers."
+	WELCOMEMSG   = "Welcome to PoGoMud!"
 )
-
 
 // Represents all the connection and channel information
 // needed for a user on the server.
 type User struct {
-	Name string
-	Conn *net.TCPConn
+	Name     string
+	Conn     *net.TCPConn
 	toServer chan Message
-	toUser chan Message
+	toUser   chan Message
+	online   bool // Setting to false ends users handlers.
 }
 
 // Closes the connection and preforms anything needed with it.
@@ -38,10 +38,14 @@ func (u *User) Destroy() {
 // new values to the connection.
 func HandleToServer(user *User) {
 	reader := bufio.NewReader(user.Conn)
-	for {
+	for user.online {
 		line, _, err := reader.ReadLine()
 		if err != nil {
 			log.Fatal(err)
+		}
+		if string(line) == "QUIT" {
+			user.online = false
+			user.Conn.Close()
 		}
 		user.toServer <- NewMessage(user.Name, string(line))
 	}
@@ -49,8 +53,8 @@ func HandleToServer(user *User) {
 
 // Reads their connection buffer and sends to message.
 func HandleToUser(user *User) {
-	for {
-		msg := <- user.toUser
+	for user.online {
+		msg := <-user.toUser
 		text := "(" + msg.name + "): " + msg.content + "\n"
 		user.Conn.Write([]byte(text))
 	}
@@ -59,7 +63,7 @@ func HandleToUser(user *User) {
 // Checks for valid usernames.
 func nameSetter(conn *net.TCPConn, UserList map[string]User) string {
 	var name string
-	for valid := false; valid != true; {
+	for name == "" {
 		conn.Write([]byte(VALIDNAMEMSG + "\n" + "Enter a name to use: "))
 		r := bufio.NewReader(conn)
 		line, _, err := r.ReadLine()
@@ -93,7 +97,7 @@ func validateName(name string, UserList map[string]User) (bool, string) {
 		return false, "Invalid username. " + VALIDNAMEMSG
 	}
 	// TODO Check regexp here.
-	return true, "Name accepted."  // all names valid right now. 
+	return true, "Name accepted." // all names valid right now. 
 }
 
 // type User struct {
@@ -110,9 +114,10 @@ func HandleUser(conn *net.TCPConn, toServer chan Message, userList map[string]Us
 		conn,
 		toServer,
 		make(chan Message),
+		true,
 	}
 	userList[newUser.Name] = newUser
 	go HandleToServer(&newUser)
 	go HandleToUser(&newUser)
-	toServer <- NewMessage("server", name + " has connected.")
+	toServer <- NewMessage("server", name+" has connected.")
 }
