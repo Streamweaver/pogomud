@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	//"pogomud/world"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -43,14 +43,12 @@ func (u *User) Destroy() {
 func HandleCommands(user *User) {
 	reader := bufio.NewReader(user.Conn)
 	for user.online {
-		line, _, err := reader.ReadLine()
+		rawLine, _, err := reader.ReadLine()
 		if err != nil {
 			log.Fatal(err)
+			continue
 		}
-		if string(line) == "QUIT" {
-			user.Logout()
-		}
-		user.toServer <- NewMessage(user.Name, string(line))
+		CommandParser(user, strings.Trim(string(rawLine), " "))
 	}
 }
 

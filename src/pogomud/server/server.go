@@ -3,14 +3,16 @@
 package server
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 )
+
 type Message struct {
-	name string
+	name    string
 	content string
 }
 
@@ -19,21 +21,20 @@ func NewMessage(name string, content string) Message {
 }
 
 type ServerObject struct {
-	Name string // Name of the MUD server.
-	Protocol string  // Type of TCP protocol to use.
-	Host string  // IP or DNS of host.
-	Port int // Port to run on.
-	BufferLimit int // Buffer size limit to use.
-	Database DatabaseInfo // Database connection information.
+	Name        string       // Name of the MUD server.
+	Protocol    string       // Type of TCP protocol to use.
+	Host        string       // IP or DNS of host.
+	Port        int          // Port to run on.
+	BufferLimit int          // Buffer size limit to use.
+	Database    DatabaseInfo // Database connection information.
 }
 
-
 type DatabaseInfo struct {
-	Host string // Hostname of Database
-	Port string // Port number of Database
-	Name string // Name of Database
-	User string // Admin Username for Database
-	Pass string // Password for User above.
+	Host   string // Hostname of Database
+	Port   string // Port number of Database
+	Name   string // Name of Database
+	User   string // Admin Username for Database
+	Pass   string // Password for User above.
 	Engine string // Type of Database being connected to.
 }
 
@@ -48,20 +49,20 @@ func NewServer() ServerObject {
 	}
 
 	// Parse file info into data
-	var data ServerObject
-	e = json.Unmarshal(file, &data)
+	var server ServerObject
+	e = json.Unmarshal(file, &server)
 	if e != nil {
-		fmt.Println("error parsing json: ", e)
 		log.Fatal(e)
+		os.Exit(1)
 	}
-	
+
 	// Return it all
-	//fmt.Printf("%+v\n", data)
-	return data
+	//fmt.Printf("%+v\n", server)
+	return server
 }
 
 // Creates a server on the host address and port and opens it for connections.
-func (server *ServerObject)Start() {
+func (server *ServerObject) Start() {
 
 	// Setup the server address and listener.
 	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(server.Host, fmt.Sprintf("%d", server.Port)))
@@ -78,10 +79,11 @@ func (server *ServerObject)Start() {
 	// Setup stuff to handle user communication.
 	userList := make(map[string]User)
 	msgQueue := make(chan Message)
-	// Startup a Message Handler to route message to users.
-	go MessageHandler(msgQueue, userList)
 
-	fmt.Printf("%s server started and listening on port %d.\n", server.Name, server.Port)
+	// Startup a Command Handler to interpret user input.
+	// go commandHandler(msgQueue, userList)
+
+	log.Printf("%s server started and listening on port %d.\n", server.Name, server.Port)
 
 	// Listen for and accept user connections.
 	for {
@@ -89,20 +91,22 @@ func (server *ServerObject)Start() {
 		conn, err := l.AcceptTCP()
 		if err != nil {
 			log.Fatal(err)
-			return
-		} 
+		}
 		// More code here for what to do.
 		HandleUser(conn, msgQueue, userList)
+		log.Printf("Connection made from %s\n", conn.RemoteAddr())
 	}
 }
 
-func MessageHandler(msgQueue <-chan Message, userList map[string]User) {
-	for {
-		msg := <-msgQueue
-		for key := range userList {
-			if key != msg.name {
-				userList[key].toUser <- msg
-			}
-		}
-	}
-}
+// func commandHandler(msgQueue <-chan Message, userList map[string]User) {
+// 	for {
+// 		msg := <-msgQueue
+// 		// NOTE this is just to read all command.
+// 		log.Printf("%s - %s", msg.name, msg.content)
+// 		for key := range userList {
+// 			if key != msg.name {
+// 				userList[key].toUser <- msg
+// 			}
+// 		}
+// 	}
+// }
