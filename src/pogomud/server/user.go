@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"pogomod/world"
 	"regexp"
 	"strings"
 )
@@ -18,24 +19,21 @@ const (
 // Represents all the connection and channel information
 // needed for a user on the server.
 type User struct {
-	Name     string
-	Conn     *net.TCPConn
-	toServer chan Message
-	toUser   chan Message
-	online   bool // Setting to false ends users handlers.
-	userList map[string]User
+	id        int
+	name      string
+	conn      *net.TCPConn
+	toUser    chan string
+	online    bool // Setting to false ends users handlers.
+	users     UserRegistry
+	room      Room
+	character Character
 }
 
 // Closes the connection and preforms anything needed with it.
-func (u *User) Logout() {
-	u.Destroy()
-	u.online = false
-	u.Conn.Close()
-}
-
-// Removes the user from the server userlist.
-func (u *User) Destroy() {
-	delete(u.userList, u.Name)
+func (self *User) Logout() {
+	self.users.removeUser(self)
+	self.online = false
+	self.conn.Close()
 }
 
 // Listends to the users Outgoing channel and sends
@@ -43,22 +41,39 @@ func (u *User) Destroy() {
 func HandleCommands(user *User) {
 	reader := bufio.NewReader(user.Conn)
 	for user.online {
-		rawLine, _, err := reader.ReadLine()
+		bLine, _, err := reader.ReadLine()
 		if err != nil {
 			log.Fatal(err)
 			continue
 		}
-		CommandParser(user, strings.Trim(string(rawLine), " "))
+		CommandParser(user, strings.Trim(string(bLine), " "))
 	}
 }
 
 // Reads their connection buffer and sends to message.
-func HandleToUser(user *User) {
+func HandleOut(user *User) {
 	for user.online {
 		msg := <-user.toUser
 		text := "(" + msg.name + "): " + msg.content + "\n"
 		user.Conn.Write([]byte(text))
 	}
+}
+
+func HandleUser(conn *net.TCPConn, toServer chan string, userList map[string]User) {
+	conn.Write([]byte(WELCOMEMSG + "\n"))
+	name := nameSetter(conn, userList)
+	newUser := User{
+		name,
+		conn,
+		toServer,
+		make(chan string),
+		true,
+		userList,
+	}
+	userList[newUser.Name] = newUser
+	go HandleCommands(&newUser)
+	go HandleToUser(&newUser)
+	toServer <- NewMessage("server", name+" has connected.")
 }
 
 // Checks for valid usernames.
@@ -99,27 +114,4 @@ func validateName(name string, UserList map[string]User) (bool, string) {
 	}
 	// TODO Check regexp here.
 	return true, "Name accepted." // all names valid right now. 
-}
-
-// type User struct {
-// 	Name string
-// 	Conn *net.TCPConn
-// 	toServer chan server.Message
-// 	toUser chan server.Message
-// }
-func HandleUser(conn *net.TCPConn, toServer chan Message, userList map[string]User) {
-	conn.Write([]byte(WELCOMEMSG + "\n"))
-	name := nameSetter(conn, userList)
-	newUser := User{
-		name,
-		conn,
-		toServer,
-		make(chan Message),
-		true,
-		userList,
-	}
-	userList[newUser.Name] = newUser
-	go HandleCommands(&newUser)
-	go HandleToUser(&newUser)
-	toServer <- NewMessage("server", name+" has connected.")
 }

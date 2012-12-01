@@ -11,15 +11,6 @@ import (
 	"os"
 )
 
-type Message struct {
-	name    string
-	content string
-}
-
-func NewMessage(name string, content string) Message {
-	return Message{name, content}
-}
-
 type ServerObject struct {
 	Name        string       // Name of the MUD server.
 	Protocol    string       // Type of TCP protocol to use.
@@ -56,8 +47,6 @@ func NewServer() ServerObject {
 		os.Exit(1)
 	}
 
-	// Return it all
-	//fmt.Printf("%+v\n", server)
 	return server
 }
 
@@ -97,16 +86,3 @@ func (server *ServerObject) Start() {
 		log.Printf("Connection made from %s\n", conn.RemoteAddr())
 	}
 }
-
-// func commandHandler(msgQueue <-chan Message, userList map[string]User) {
-// 	for {
-// 		msg := <-msgQueue
-// 		// NOTE this is just to read all command.
-// 		log.Printf("%s - %s", msg.name, msg.content)
-// 		for key := range userList {
-// 			if key != msg.name {
-// 				userList[key].toUser <- msg
-// 			}
-// 		}
-// 	}
-// }
