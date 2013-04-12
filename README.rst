@@ -17,7 +17,8 @@ The major Golang resoruces were obviously of big help.  They'll be of help to
 you too.
 
 * GoLang.org - http://golang.org/
-* GoLang-Nuts Google Group - https://groups.google.com/forum/?fromgroups#!forum/golang-nuts
+* GoLang-Nuts Google Group - 
+  https://groups.google.com/forum/?fromgroups#!forum/golang-nuts
 
 Credits & User Examples
 =======================
@@ -31,8 +32,8 @@ I found to be specifically useful.
 *  Great Go Chat Server/Client example: 
    http://www.badgerr.co.uk/2011/06/20/golang-away-tcp-chat-server/
 
-*  WolfMUD - Attempting a GoLang port of Java based MUD
-   http://code.wolfmud.com
+*  WolfMUD - GoLang rewrite of the original Java based WolfMUD
+   http://wolfmud.org
 
 *  Aquuilax's GoMud
    https://github.com/aquilax/gomud
