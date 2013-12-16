@@ -2,10 +2,10 @@
 package main
 
 import (
-	"pogomud/server"
+	"github.com/streamweaver/server"
 )
 
 func main() {
 	server := server.NewServer()
-	server.Start()
+	server.Start("config.json") // TODO make this callable by flag.
 }

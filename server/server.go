@@ -11,39 +11,28 @@ import (
 	"os"
 )
 
-type ServerObject struct {
-	Name        string       // Name of the MUD server.
-	Protocol    string       // Type of TCP protocol to use.
-	Host        string       // IP or DNS of host.
-	Port        int          // Port to run on.
-	BufferLimit int          // Buffer size limit to use.
-	Database    DatabaseInfo // Database connection information.
+type Server struct {
+	Name        string // Name of the MUD server.
+	Host        string // IP or DNS of host.
+	Port        int    // Port to run on.
+	BufferLimit int    // Buffer size limit to use.
 }
 
-type DatabaseInfo struct {
-	Host   string // Hostname of Database
-	Port   string // Port number of Database
-	Name   string // Name of Database
-	User   string // Admin Username for Database
-	Pass   string // Password for User above.
-	Engine string // Type of Database being connected to.
-}
-
-// Loads config information from JSON file into a Server Object
-func NewServer() ServerObject {
+// Loads config information from JSON file provided in the pth argument.
+func NewServer(pth string) *Server {
 
 	// Load json file with config information.
-	file, e := ioutil.ReadFile("config.json")
-	if e != nil {
-		fmt.Printf("%s\n", e)
-		log.Fatal(e)
+	file, err := ioutil.ReadFile()
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	// Parse file info into data
-	var server ServerObject
-	e = json.Unmarshal(file, &server)
-	if e != nil {
-		log.Fatal(e)
+	server := new(Server)
+	e = json.Unmarshal(file, server)
+	if err != nil {
+		log.Fatal(err)
 		os.Exit(1)
 	}
 
@@ -51,10 +40,10 @@ func NewServer() ServerObject {
 }
 
 // Creates a server on the host address and port and opens it for connections.
-func (server *ServerObject) Start() {
+func (s *Server) Start() {
 
 	// Setup the server address and listener.
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(server.Host, fmt.Sprintf("%d", server.Port)))
+	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Host, fmt.Sprintf("%d", s.Port)))
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -65,24 +54,17 @@ func (server *ServerObject) Start() {
 		return
 	}
 
-	// Setup stuff to handle user communication.
-	userList := make(map[string]User)
-	msgQueue := make(chan Message)
-
-	// Startup a Command Handler to interpret user input.
-	// go commandHandler(msgQueue, userList)
-
-	log.Printf("%s server started and listening on port %d.\n", server.Name, server.Port)
+	log.Printf("%s server started and listening on port %d.\n", s.Name, s.Port)
 
 	// Listen for and accept user connections.
 	for {
-		// Wait for a connection. 
+		// Wait for a connection.
 		conn, err := l.AcceptTCP()
 		if err != nil {
 			log.Fatal(err)
 		}
 		// More code here for what to do.
-		HandleUser(conn, msgQueue, userList)
+		HandleUser(conn)
 		log.Printf("Connection made from %s\n", conn.RemoteAddr())
 	}
 }

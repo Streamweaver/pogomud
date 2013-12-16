@@ -22,7 +22,7 @@ type User struct {
 	id        int
 	name      string
 	conn      *net.TCPConn
-	toUser    chan string
+	out       chan string
 	online    bool // Setting to false ends users handlers.
 	users     UserRegistry
 	room      Room
@@ -38,7 +38,7 @@ func (self *User) Logout() {
 
 // Listends to the users Outgoing channel and sends
 // new values to the connection.
-func HandleCommands(user *User) {
+func handleInput(user *User) {
 	reader := bufio.NewReader(user.Conn)
 	for user.online {
 		bLine, _, err := reader.ReadLine()
@@ -51,7 +51,7 @@ func HandleCommands(user *User) {
 }
 
 // Reads their connection buffer and sends to message.
-func HandleOut(user *User) {
+func hangleOutput(user *User) {
 	for user.online {
 		msg := <-user.toUser
 		text := "(" + msg.name + "): " + msg.content + "\n"
@@ -113,5 +113,5 @@ func validateName(name string, UserList map[string]User) (bool, string) {
 		return false, "Invalid username. " + VALIDNAMEMSG
 	}
 	// TODO Check regexp here.
-	return true, "Name accepted." // all names valid right now. 
+	return true, "Name accepted." // all names valid right now.
 }
