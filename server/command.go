@@ -24,3 +24,13 @@ func NewCommand(name string, help string, f func(*User, string)) *Command {
 	}
 	return cmd
 }
+
+func say(u *User, line string) {
+
+}
+
+func logout(u *User, line string) {
+	u.online = false
+	// Remove from user list.
+	u.conn.Close()
+}

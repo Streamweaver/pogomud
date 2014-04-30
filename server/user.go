@@ -4,9 +4,9 @@ package server
 import (
 	"bufio"
 	"fmt"
+	"github.com/streamweaver/world"
 	"log"
 	"net"
-	"pogomod/world"
 	"regexp"
 	"strings"
 )
@@ -19,14 +19,10 @@ const (
 // Represents all the connection and channel information
 // needed for a user on the server.
 type User struct {
-	id        int
-	name      string
-	conn      *net.TCPConn
-	out       chan string
-	online    bool // Setting to false ends users handlers.
-	users     UserRegistry
-	room      Room
-	character Character
+	world.Mob
+	conn   *net.TCPConn
+	out    chan string
+	online bool // Setting to false ends users handlers.
 }
 
 // Closes the connection and preforms anything needed with it.

@@ -12,10 +12,12 @@ import (
 )
 
 type Server struct {
-	Name        string // Name of the MUD server.
-	Host        string // IP or DNS of host.
-	Port        int    // Port to run on.
-	BufferLimit int    // Buffer size limit to use.
+	Name             string // Name of the MUD server.
+	Host             string // IP or DNS of host.
+	Port             int    // Port to run on.
+	BufferLimit      int    // Buffer size limit to use.
+	AllowConnections bool   // Flag to allow connections
+	RejectMessage string // String to send if not accepting connections.
 }
 
 // Loads config information from JSON file provided in the pth argument.
@@ -41,6 +43,7 @@ func NewServer(pth string) *Server {
 
 // Creates a server on the host address and port and opens it for connections.
 func (s *Server) Start() {
+	s.Shutdown = false
 
 	// Setup the server address and listener.
 	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Host, fmt.Sprintf("%d", s.Port)))
@@ -63,8 +66,21 @@ func (s *Server) Start() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// More code here for what to do.
-		HandleUser(conn)
-		log.Printf("Connection made from %s\n", conn.RemoteAddr())
+
+		if s.AllowConnections {
+			HandleUser(conn)
+			log.Printf("Connection made from %s\n", conn.RemoteAddr())
+		} else {
+			RejectConnection(conn)
+		}
 	}
+}
+
+func (s *Server) Stop() {
+	log.Printf("Stopping Server.")
+}
+
+func RejectConnection(conn *net.TCPConn) {
+	conn.Write([]byte("The server is not currently accepting connections please try again later.")])
+	log.Printf("Server refused connection from %s", conn.RemoteAddr())
 }
