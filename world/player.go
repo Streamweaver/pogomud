@@ -2,6 +2,7 @@ package world
 
 import (
 	"net"
+	"fmt"
 )
 
 type Player struct {
@@ -9,4 +10,8 @@ type Player struct {
 	password string
 	conn     *net.TCPConn
 	receive  *chan string
+}
+
+func FindPlayer(name string) (*Player, error) {
+	return nil, fmt.Errorf("'%s' not found.", name)
 }

@@ -10,6 +10,7 @@ type World struct {
 
 func NewWorld() *World {
 	w := new(World)
-	w.areas = make(map[int]Area)
+	w.Areas = make(map[int]Area)
+	w.Players = make(map[int]Player)
 	return w
 }

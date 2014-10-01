@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strings"
+	"github.com/streamweaver/pogomud/world"
 )
 
 const (
@@ -15,30 +17,78 @@ const (
 
 func HandleUser(conn *net.TCPConn) {
 	conn.Write([]byte(WELCOMEMSG + "\n"))
-	name := nameSetter(conn)
+	name := promptName(conn)
 	conn.Write([]byte("Name set to " + name + " goodbye!\n"))
 	conn.Close()
 }
 
 // // Checks for valid usernames.
-func nameSetter(conn *net.TCPConn) string {
+func promptName(conn *net.TCPConn) string {
 	var name string
-	conn.Write([]byte(VALIDNAMEMSG + "\n" + "Enter a name to use: "))
+	conn.Write([]byte(VALIDNAMEMSG + "\n" + "Enter a character name: "))
 	r := bufio.NewReader(conn)
 	for name == "" {
 		line, _, err := r.ReadLine()
+		n := strings.TrimSpace(string(line))
 		if err != nil {
 			conn.Write([]byte(fmt.Sprintf("Name Error: %s", err)))
 			continue
 		}
-		valid, msg := validateName(string(line))
+		valid, msg := validateName(n)
 		if valid {
-			name = string(line)
+			name = n
 		} else {
 			conn.Write([]byte(fmt.Sprintf("Name Error: %s", msg)))
 		}
 	}
 	return name
+}
+
+func newCharacter(conn *net.TCPConn) *world.Player {
+	name := setName(conn)
+	desc := setDescription(conn)
+}
+
+func setName(conn *net.TCPConn) string {
+	var name string
+	conn.Write([]byte(VALIDNAMEMSG + "\n" + "Enter a new character name: "))
+	r := bufio.NewReader(conn)
+	for name == "" {
+		line, _, err := r.ReadLine()
+		n := strings.TrimSpace(string(line))
+		if err != nil {
+			conn.Write([]byte(fmt.Sprintf("Name Error: %s", err)))
+			continue
+		}
+		valid, msg := validateName(n)
+		if valid {
+			name = n
+		} else {
+			conn.Write([]byte(fmt.Sprintf("Name Error: %s", msg)))
+		}
+	}
+	return name
+}
+
+func setDescription(conn *net.TCPConn) string {
+	var desc string
+	conn.Write([]byte("Enter a short character description: "))
+	r := bufio.NewReader(conn)
+	for desc == "" {
+		line, _, err := r.ReadLine()
+		d := strings.TrimSpace(string(line))
+		if err != nil {
+			conn.Write([]byte(fmt.Sprintf("Error: %s", err)))
+			continue
+		}
+		valid, msg := validateDescription(d)
+		if valid {
+			desc = d
+		} else {
+			conn.Write([]byte(fmt.Sprintf("Error: %s", msg)))
+		}
+	}
+	return desc
 }
 
 // Checks for valid name string and returns ture of false.
@@ -55,4 +105,11 @@ func validateName(name string) (bool, string) {
 	}
 	// TODO Check regexp here.
 	return true, "Name accepted." // all names valid right now.
+}
+
+func validateDescription(desc string) (bool, string) {
+	if desc == "" {
+		return false, ""
+	}
+	return true, desc
 }

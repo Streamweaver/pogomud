@@ -4,12 +4,9 @@ package world
 
 type Area struct {
 	Entity
-	occupants map[server.User]bool
-	exits     []Exit
+	occupants map[Player]bool
 }
 
 func (self *Area) Broadcast(line string) {
-	for u, _ := range self.occupants {
-		u.message <- line
-	}
+	
 }
