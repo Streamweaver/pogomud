@@ -2,10 +2,15 @@
 package main
 
 import (
-	"github.com/streamweaver/server"
+	"flag"
+	"github.com/streamweaver/pogomud/server"
 )
 
 func main() {
-	server := server.NewServer()
-	server.Start("config.json") // TODO make this callable by flag.
+
+	var fName string
+	flag.StringVar(&fName, "conf", "config.json", "path to config file.")
+
+	server := server.NewServer(fName)
+	server.Start()
 }

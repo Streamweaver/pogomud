@@ -12,19 +12,20 @@ import (
 )
 
 type Server struct {
-	Name             string // Name of the MUD server.
-	Host             string // IP or DNS of host.
-	Port             int    // Port to run on.
-	BufferLimit      int    // Buffer size limit to use.
-	AllowConnections bool   // Flag to allow connections
-	RejectMessage string // String to send if not accepting connections.
+	Name        string `json:"name"`         // Name of the MUD server.
+	Host        string `json:"host"`         // IP or DNS of host.
+	Port        int    `json:"port"`         // Port to run on.
+	BufferLimit int    `json:"buffer_limit"` // Buffer size limit to use.
+	RejectMsg   string `json:"reject_msg"`   // String to send if not accepting connections.
+	allowLogin  bool   // Flag to allow connections
+	running     bool   // Boolean of weather server should be on or off.
 }
 
-// Loads config information from JSON file provided in the pth argument.
-func NewServer(pth string) *Server {
+// Returns a new Server instance configured with json file provided by cfg
+func NewServer(cfg string) *Server {
 
 	// Load json file with config information.
-	file, err := ioutil.ReadFile()
+	file, err := ioutil.ReadFile(cfg)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -32,55 +33,62 @@ func NewServer(pth string) *Server {
 
 	// Parse file info into data
 	server := new(Server)
-	e = json.Unmarshal(file, server)
-	if err != nil {
+	if err = json.Unmarshal(file, server); err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 
 	return server
 }
 
 // Creates a server on the host address and port and opens it for connections.
-func (s *Server) Start() {
-	s.Shutdown = false
+func (s *Server) Start() error {
+	s.running = true
+	s.allowLogin = true
 
 	// Setup the server address and listener.
 	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Host, fmt.Sprintf("%d", s.Port)))
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
-	l, err := net.ListenTCP(server.Protocol, addr)
+	l, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
-		return
+		return err
 	}
 
 	log.Printf("%s server started and listening on port %d.\n", s.Name, s.Port)
 
-	// Listen for and accept user connections.
-	for {
+	// Listen for and accept user connections until server shutdown.
+	for s.running {
 		// Wait for a connection.
 		conn, err := l.AcceptTCP()
 		if err != nil {
 			log.Fatal(err)
+			return err
 		}
 
-		if s.AllowConnections {
-			HandleUser(conn)
+		if s.allowLogin {
+			go HandleUser(conn)
 			log.Printf("Connection made from %s\n", conn.RemoteAddr())
 		} else {
-			RejectConnection(conn)
+			s.RejectConnection(conn)
 		}
 	}
+
+	return nil
 }
 
 func (s *Server) Stop() {
 	log.Printf("Stopping Server.")
+	s.allowLogin = false
+	s.running = false
+	// TODO any other cleanup I need to do.
 }
 
-func RejectConnection(conn *net.TCPConn) {
-	conn.Write([]byte("The server is not currently accepting connections please try again later.")])
+func (s *Server) RejectConnection(conn *net.TCPConn) {
+	conn.Write([]byte(s.RejectMsg))
+	conn.Write([]byte("\n"))
 	log.Printf("Server refused connection from %s", conn.RemoteAddr())
+	conn.Close()
 }

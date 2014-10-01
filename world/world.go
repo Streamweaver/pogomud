@@ -4,19 +4,12 @@
 package world
 
 type World struct {
-	areas map[Area]bool
+	Areas   map[int]Area
+	Players map[int]Player
 }
 
 func NewWorld() *World {
 	w := new(World)
-	w.areas = make(map[Area]bool)
+	w.areas = make(map[int]Area)
 	return w
-}
-
-func (w *World) AddArea(a *Area) {
-	w.areas[a] = true
-}
-
-func (w *World) RemoveArea(a *Area) {
-	delete(a, w.areas)
 }

@@ -1,6 +1,7 @@
 {
-  "Name": "PoGo MUD",
-  "Host": "localhost",
-  "Port": 4201,
-  "BufferLimit": 1024,
+  "name": "PoGo MUD",
+  "host": "localhost",
+  "port": 4201,
+  "buffer_limit": 1024,
+  "reject_msg":  "Not accepting connections right now, try back later."
 }

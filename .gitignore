@@ -9,3 +9,7 @@
 bin/
 pkg/
 .project
+
+# Config files
+*.json
+*.ini
