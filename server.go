@@ -1,6 +1,4 @@
-// Stuff for handling the server itself.
-// Playing around with example from https://gist.github.com/775526
-package server
+package pogomud
 
 import (
 	"encoding/json"
@@ -22,7 +20,7 @@ type Server struct {
 }
 
 // Returns a new Server instance configured with json file provided by cfg
-func NewServer(cfg string) *Server {
+func NewServer() *Server {
 
 	// Load json file with config information.
 	file, err := ioutil.ReadFile(cfg)
@@ -76,6 +74,7 @@ func (s *Server) Start() error {
 		}
 	}
 
+	log.Printf("Server Stopped, exiting.")
 	return nil
 }
 
